@@ -1,22 +1,23 @@
-// import express
-const express = require("express"); // similar to import express from 'express';
+const express = require("express"); 
 
-// create a server
 const server = express();
 
-// middleware - to teach express new tricks
-server.use(express.json()); // how to parse JSON from the body
+server.use(express.json());
 
 let users = [
     {
         id: 1,
         name: "Raymond", 
         bio: "A cool cat.",  
+      },
+      {
+        id: 2,
+        name: "Bob", 
+        bio: "A lazy cat.",  
       }
 
 ];
 
-// a function to handle GET requests to /
 server.get("/", (req, res) => {
   res.send("API");
 });
@@ -28,7 +29,6 @@ server.get("/api/users", function (req, res) {
 });
 
 server.post("/api/users", function (req, res) {
-  // axios.post(url, data, options) -> the data is in the request body
  
     if (req.body.name == undefined || req.body.bio == undefined){
         res.status(400).json({errorMessage: "Please provide name and bio for the user."})
@@ -37,36 +37,63 @@ server.post("/api/users", function (req, res) {
             users.push(req.body);
             res.status(201).json(req.body)
         }catch{
-            res.status(500).json({errorMessage: "There was an error while saving the user to the database" })
+            res.status(500).json({errorMessage: "There was an error while saving the user to the database." })
         }
     }
 });
 
-server.delete("api/users/:id", function (req, res) {
+server.delete("/api/users/:id", function (req, res) {
   const id = req.params.id;
+  let idfound = false;
 
-  
-if(users){users = users.filter(h => h.id !== Number(id));
-    res.status(200).json(users);}
-    else{
-    res.status(404).json({message: "The user with the specified ID does not exist."})}
-});
-
-server.patch('/api/users/:id', (req,res) => {
-    let user = users.find(user => user.id === req.params.id)
-    const changes = req.body
-    if (!req.body.name || !req.body.bio ) {
-        res.status(400).json({ errorMessage: "Please provide name and bio for the user." })
-    } else if (user) {
-        Object.assign(user, changes)
-        res.status(200).json({user})
-    } else {
-        res.status(404).json({ message: "The user with the specified ID does not exist." })
+    for (i=0; i<users.length; i++){
+        if (users[i].id == Number(id)){
+            idfound = true;
+        }
     }
 
-})
+    if(idfound == true){
+        try{
+        users = users.filter(h => h.id !== Number(id));
+        res.status(200).json(users);
+        }catch{
+            res.status(500).json({ errorMessage: "The user could not be removed"})
+        }
+    }
+    else{
+        res.status(404).json({message: "The user with the specified ID does not exist."})
+    }
+});
 
+server.put('/api/users/:id', (req,res) => {
+    if (req.body.name == undefined || req.body.bio == undefined){
+        res.status(400).json({errorMessage: "Please provide name and bio for the user."})
+    }else{
+    const id = req.params.id;
+    let idfound = false;
+    let idchange;
+      for (i=0; i<users.length; i++){
+          if (users[i].id == Number(id)){
+              idfound = true;
+              idchange = i;
+              break;   
+          }
+      }
 
+      if(idfound == true){
+          try{
+          users[idchange].name = req.body.name;
+          users[idchange].bio= req.body.bio;
+          res.status(200).json(users);
+          }catch{
+              res.status(500).json({errorMessage: "The user information could not be modified."})
+          }
+      }
+      else{
+          res.status(404).json({message: "The user with the specified ID does not exist."})
+      }
+    }
+  });
 
 // listen for incoming requests
 const port = 8000;
